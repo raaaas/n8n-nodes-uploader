@@ -1,18 +1,13 @@
+"use strict";
+
+const { TwitterMediaUpload } = require('./nodes/Twitter/TwitterMediaUpload.node');
+const { TwitterApi } = require('./credentials/TwitterApi.credentials');
+
 module.exports = {
-  nodes: [
-    {
-      routing: {
-        endpoint: 'file:dist/nodes/Twitter/TwitterMediaUpload.node.js',
-        className: 'Twitter',
-      },
-    },
-  ],
-  credentials: [
-    {
-      routing: {
-        endpoint: 'file:dist/credentials/TwitterApi.credentials.js',
-        className: 'TwitterApi',
-      },
-    },
-  ],
+    nodeTypes: [
+        TwitterMediaUpload
+    ],
+    credentialTypes: [
+        TwitterApi
+    ]
 };

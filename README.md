@@ -86,6 +86,48 @@ The node includes comprehensive error handling for common issues:
 - Authentication errors
 - Twitter API errors
 
+## Publishing to n8n Community
+
+To publish your node to the n8n community, follow these steps:
+
+1. **Prepare Your Package**
+   - Ensure your package name follows the format: `n8n-nodes-*`
+   - Update package.json with correct metadata (name, description, author, etc.)
+   - Include the `n8n-community-node-package` keyword in package.json
+
+2. **Test Your Node**
+   ```bash
+   # Build the package
+   npm run build
+   
+   # Run linting
+   npm run lint
+   ```
+
+3. **Publish to npm**
+   ```bash
+   # Login to npm
+   npm login
+   
+   # Publish your package
+   npm publish
+   ```
+
+4. **Submit to n8n Community Hub**
+   - Go to [n8n Community Hub](https://hub.n8n.io/)
+   - Click on "Submit Node"
+   - Fill out the submission form with:
+     - Package name
+     - Description
+     - Documentation link
+     - GitHub repository link
+   - Submit for review
+
+5. **Maintenance**
+   - Monitor issues and feedback from the community
+   - Keep the node updated with Twitter API changes
+   - Regularly update dependencies
+
 ## License
 
 [MIT](LICENSE.md)
