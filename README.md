@@ -1,46 +1,91 @@
-![Banner image](https://user-images.githubusercontent.com/10284570/173569848-c624317f-42b1-45a6-ab09-f0ea3c247648.png)
+# n8n-nodes-twitter-uploader
 
-# n8n-nodes-starter
+This is an n8n community node for uploading media to Twitter. It allows you to upload images to Twitter and returns the media ID that can be used in other Twitter operations.
 
-This repo contains example nodes to help you get started building your own custom integrations for [n8n](n8n.io). It includes the node linter and other dependencies.
+## Features
 
-To make your custom node available to the community, you must create it as an npm package, and [submit it to the npm registry](https://docs.npmjs.com/packages-and-modules/contributing-packages-to-the-registry).
+- Upload images to Twitter's media endpoint
+- Supports multiple image formats (JPEG, PNG, GIF)
+- OAuth 1.0a authentication
+- Returns media ID for use in tweets or other Twitter operations
 
-## Prerequisites
+## Installation
 
-You need the following installed on your development machine:
+Follow these steps to install this node in your n8n instance:
 
-* [git](https://git-scm.com/downloads)
-* Node.js and pnpm. Minimum version Node 18. You can find instructions on how to install both using nvm (Node Version Manager) for Linux, Mac, and WSL [here](https://github.com/nvm-sh/nvm). For Windows users, refer to Microsoft's guide to [Install NodeJS on Windows](https://docs.microsoft.com/en-us/windows/dev-environment/javascript/nodejs-on-windows).
-* Install n8n with:
-  ```
-  pnpm install n8n -g
-  ```
-* Recommended: follow n8n's guide to [set up your development environment](https://docs.n8n.io/integrations/creating-nodes/build/node-development-environment/).
+```bash
+# Using npm
+npm install n8n-nodes-twitter-uploader
 
-## Using this starter
+# Using pnpm
+pnpm install n8n-nodes-twitter-uploader
+```
 
-These are the basic steps for working with the starter. For detailed guidance on creating and publishing nodes, refer to the [documentation](https://docs.n8n.io/integrations/creating-nodes/).
+## Configuration
 
-1. [Generate a new repository](https://github.com/n8n-io/n8n-nodes-starter/generate) from this template repository.
-2. Clone your new repo:
-   ```
-   git clone https://github.com/<your organization>/<your-repo-name>.git
-   ```
-3. Run `pnpm i` to install dependencies.
-4. Open the project in your editor.
-5. Browse the examples in `/nodes` and `/credentials`. Modify the examples, or replace them with your own nodes.
-6. Update the `package.json` to match your details.
-7. Run `pnpm lint` to check for errors or `pnpm lintfix` to automatically fix errors when possible.
-8. Test your node locally. Refer to [Run your node locally](https://docs.n8n.io/integrations/creating-nodes/test/run-node-locally/) for guidance.
-9. Replace this README with documentation for your node. Use the [README_TEMPLATE](README_TEMPLATE.md) to get started.
-10. Update the LICENSE file to use your details.
-11. [Publish](https://docs.npmjs.com/packages-and-modules/contributing-packages-to-the-registry) your package to npm.
+### Twitter API Credentials
 
-## More information
+To use this node, you need to have Twitter API credentials. Here's how to get them:
 
-Refer to our [documentation on creating nodes](https://docs.n8n.io/integrations/creating-nodes/) for detailed information on building your own nodes.
+1. Go to [Twitter Developer Portal](https://developer.twitter.com/en/portal/dashboard)
+2. Create a new app or select an existing one
+3. Navigate to "Keys and Tokens"
+4. Generate/Copy the following credentials:
+   - Consumer Key (API Key)
+   - Consumer Secret (API Secret)
+   - Access Token
+   - Access Token Secret
+
+### Node Configuration
+
+The node requires the following parameters:
+
+- **Binary Property**: Name of the binary property that contains the image file (default: 'data')
+- **Media Type**: Type of media being uploaded (JPEG, PNG, or GIF)
+
+## Usage
+
+1. Add the Twitter Media Upload node to your workflow
+2. Configure the Twitter API credentials
+3. Connect a node that provides an image file (e.g., HTTP Request, Read Binary File)
+4. Set the binary property name that contains your image
+5. Select the appropriate media type
+6. Execute the workflow
+
+### Example Usage
+
+Here's an example of how to use this node in a workflow:
+
+1. **HTTP Request** node: Download an image
+2. **Twitter Media Upload** node: Upload the image to Twitter
+3. **Twitter** node: Use the returned media ID to create a tweet with the image
+
+## Response
+
+The node returns an object containing:
+
+```json
+{
+  "media_id": "1234567890",
+  "media_id_string": "1234567890",
+  "size": 12345,
+  "expires_after_secs": 86400,
+  "image": {
+    "image_type": "image/jpeg",
+    "w": 800,
+    "h": 600
+  }
+}
+```
+
+## Error Handling
+
+The node includes comprehensive error handling for common issues:
+- Missing binary data
+- Invalid media types
+- Authentication errors
+- Twitter API errors
 
 ## License
 
-[MIT](https://github.com/n8n-io/n8n-nodes-starter/blob/master/LICENSE.md)
+[MIT](LICENSE.md)
