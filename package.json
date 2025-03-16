@@ -1,6 +1,6 @@
 {
   "name": "n8n-nodes-twitter-uploader",
-  "version": "0.1.13",
+  "version": "0.1.39",
   "description": "n8n node for uploading media to Twitter using OAuth 1.0a authentication",
   "keywords": [
     "n8n-community-node-package",
@@ -26,16 +26,15 @@
   "packageManager": "pnpm@9.1.4",
   "main": "dist/index.js",
   "scripts": {
-    "build": "tsc && cp -f index.js dist/",
+    "build": "rm -rf dist && tsc",
     "dev": "tsc --watch",
-    "format": "prettier nodes credentials --write",
-    "lint": "eslint nodes credentials package.json",
-    "lintfix": "eslint nodes credentials package.json --fix",
-    "prepublishOnly": "npm run build && npm run lint"
+    "format": "prettier nodes credentials src --write",
+    "lint": "eslint nodes credentials src --ext .ts",
+    "lintfix": "eslint nodes credentials src --ext .ts --fix",
+    "prepublishOnly": "npm run build"
   },
   "files": [
-    "dist",
-    "index.js"
+    "dist"
   ],
   "n8n": {
     "n8nNodesApiVersion": 1,
@@ -43,7 +42,8 @@
       "dist/credentials/TwitterApi.credentials.js"
     ],
     "nodes": [
-      "dist/nodes/Twitter/TwitterMediaUpload.node.js"
+      "dist/nodes/Twitter/TwitterMediaUpload.node.js",
+      "dist/nodes/Twitter/TwitterBinaryCheck.node.js"
     ]
   },
   "devDependencies": {

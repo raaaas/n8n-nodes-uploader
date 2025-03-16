@@ -1,14 +1,11 @@
 import {
-  IDataObject,
   IExecuteFunctions,
   INodeExecutionData,
   INodeType,
   INodeTypeDescription,
   NodeOperationError,
-  IHttpRequestMethods,
+  NodeApiError,
 } from 'n8n-workflow';
-import { createHmac } from 'crypto';
-import { TwitterUtils } from './TwitterUtils';
 
 export class TwitterMediaUpload implements INodeType {
   description: INodeTypeDescription = {
@@ -35,131 +32,154 @@ export class TwitterMediaUpload implements INodeType {
         type: 'string',
         default: 'data',
         required: true,
-        description: 'Name of the binary property containing the image file',
+        description: 'Name of the binary property that contains the image from the Image Format Converter',
       },
     ],
   };
 
   async execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {
+    // Validate credentials first
+    const credentials = await this.getCredentials('twitterApi');
+    if (!credentials) {
+      throw new NodeOperationError(this.getNode(), 'No credentials provided');
+    }
+
+    // Validate required OAuth fields
+    const requiredFields = ['consumerKey', 'consumerSecret', 'accessToken', 'accessTokenSecret'];
+    for (const field of requiredFields) {
+      if (!credentials[field]) {
+        throw new NodeOperationError(this.getNode(), `Missing required credential field: ${field}`);
+      }
+    }
+
+    // Log credential status (without sensitive data)
+    console.log('Twitter credentials status:', {
+      hasConsumerKey: !!credentials.consumerKey,
+      hasConsumerSecret: !!credentials.consumerSecret,
+      hasAccessToken: !!credentials.accessToken,
+      hasAccessTokenSecret: !!credentials.accessTokenSecret,
+    });
+
     const items = this.getInputData();
     const returnData: INodeExecutionData[] = [];
 
     for (let i = 0; i < items.length; i++) {
       try {
-        const credentials = await this.getCredentials('twitterApi');
+        // Get the binary property name (e.g., "data" from the previous node)
         const binaryPropertyName = this.getNodeParameter('binaryPropertyName', i) as string;
 
+        // Debug log available binary properties
+        console.log('Available binary properties:', Object.keys(items[i].binary || {}));
+        console.log('Requested binary property:', binaryPropertyName);
+
+        // Check if binary data exists
         if (!items[i].binary?.[binaryPropertyName]) {
-          throw new NodeOperationError(this.getNode(), 'No binary data exists on item!');
+          // Log more detailed information about the item structure
+          console.log('Full item structure:', JSON.stringify(items[i], null, 2));
+          throw new NodeOperationError(
+            this.getNode(),
+            `No binary data found in property "${binaryPropertyName}". Available properties: ${Object.keys(items[i].binary || {}).join(', ') || 'none'}`
+          );
         }
 
-        // Use the MIME type from the binary data
+        // Extract binary data and metadata
+        const binaryData = await this.helpers.getBinaryDataBuffer(i, binaryPropertyName);
         const mediaType = items[i].binary![binaryPropertyName].mimeType;
+        const fileName = items[i].binary![binaryPropertyName].fileName || 'image.jpg';
 
+        // Validate binary data and media type
         if (!mediaType || !mediaType.startsWith('image/')) {
           throw new NodeOperationError(
             this.getNode(),
             `Invalid media type: ${mediaType}. Only images are supported.`
           );
         }
-
-        const binaryData = await this.helpers.getBinaryDataBuffer(i, binaryPropertyName);
-
-        // Verify binary data is valid
         if (!Buffer.isBuffer(binaryData) || binaryData.length === 0) {
-          throw new NodeOperationError(this.getNode(), 'Invalid binary data: Buffer is empty or not a valid Buffer');
+          throw new NodeOperationError(
+            this.getNode(),
+            'Invalid binary data: Buffer is empty or not a valid Buffer'
+          );
         }
 
-        const oauth = {
-          consumer_key: credentials.consumerKey as string,
-          consumer_secret: credentials.consumerSecret as string,
-          token: credentials.accessToken as string,
-          token_secret: credentials.accessTokenSecret as string,
-        };
+        // Debug log binary data details
+        console.log('Binary data details:', {
+          fileName,
+          mediaType,
+          dataSize: binaryData.length,
+        });
 
-        const timestamp = Math.floor(Date.now() / 1000).toString();
-        const nonce = Buffer.from(Math.random().toString()).toString('base64');
-
-        const parameters: IDataObject = {
-          oauth_consumer_key: oauth.consumer_key,
-          oauth_token: oauth.token,
-          oauth_signature_method: 'HMAC-SHA1',
-          oauth_timestamp: timestamp,
-          oauth_nonce: nonce,
-          oauth_version: '1.0',
-        };
-
-        const baseString = TwitterUtils.createSignatureBaseString(
-          'POST',
-          'https://upload.twitter.com/1.1/media/upload.json',
-          parameters,
-        );
-
-        const signingKey = `${encodeURIComponent(oauth.consumer_secret)}&${encodeURIComponent(
-          oauth.token_secret,
-        )}`;
-
-        const signature = createHmac('sha1', signingKey)
-          .update(baseString)
-          .digest('base64');
-
-        const authHeader = TwitterUtils.createAuthorizationHeader(parameters, signature);
-
-        // Create a proper boundary for multipart form data
-        const boundary = `------------------------${Date.now()}`;
-
-        // Create the form data manually
-        const formDataStart = `--${boundary}\r\nContent-Disposition: form-data; name="media"; filename="${
-          items[i].binary![binaryPropertyName].fileName || 'image.jpg'
-        }"\r\nContent-Type: ${mediaType}\r\n\r\n`;
-        const formDataEnd = `\r\n--${boundary}--\r\n`;
-
-        // Combine the parts into a single buffer
-        const formDataBuffer = Buffer.concat([
-          Buffer.from(formDataStart, 'utf-8'),
-          binaryData,
-          Buffer.from(formDataEnd, 'utf-8'),
-        ]);
-
+        // Define request options with correct formData structure for Twitter API
         const options = {
-          method: 'POST' as IHttpRequestMethods,
           url: 'https://upload.twitter.com/1.1/media/upload.json',
-          headers: {
-            'Content-Type': `multipart/form-data; boundary=${boundary}`,
-            'Content-Length': formDataBuffer.length.toString(),
-            Authorization: authHeader,
+          method: 'POST',
+          formData: {
+            media_data: binaryData.toString('base64'), // Twitter API expects base64 encoded data
           },
-          body: formDataBuffer,
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          json: true,
           resolveWithFullResponse: true,
         };
 
-        try {
-          // Use the binary-capable request method
-          const response = await this.helpers.httpRequest(options);
-          const responseData = JSON.parse(response.body.toString());
+        // Debug log request options (excluding binary data)
+        console.log('Request options:', {
+          ...options,
+          formData: { media_data: '[BASE64_DATA]' }, // Omit actual data from logs
+        });
 
-          returnData.push({
-            json: {
-              media_id: responseData.media_id_string,
-              ...responseData,
-            },
-          });
+        // Send the request using n8n's OAuth1 helper with enhanced error handling
+        let response;
+        try {
+          response = await this.helpers.requestOAuth1.call(this, 'twitterApi', options);
         } catch (error) {
-          if (this.continueOnFail()) {
-            returnData.push({
-              json: {
-                error: error.message,
-                details: error.response?.body ? JSON.parse(error.response.body.toString()) : undefined,
-                statusCode: error.response?.statusCode
-              }
+          console.error('OAuth request error:', error);
+          if (error.statusCode === 401) {
+            throw new NodeApiError(this.getNode(), error, {
+              message: 'OAuth credentials not connected or invalid',
+              description: 'Please verify your Twitter API credentials are correct and have the necessary permissions.',
             });
-            continue;
           }
           throw error;
         }
+
+        // Log response status and headers
+        console.log('Response status:', response.statusCode);
+        console.log('Response headers:', response.headers);
+
+        // Check for success
+        if (response.statusCode !== 200) {
+          console.log('Error response body:', response.body);
+          throw new NodeApiError(this.getNode(), response, {
+            message: `Twitter API Error: ${response.statusMessage}`,
+            description: 'Failed to upload media to Twitter',
+          });
+        }
+
+        // Add the response to the output
+        returnData.push({
+          json: {
+            success: true,
+            media_id: response.body.media_id_string,
+            ...response.body,
+          },
+        });
       } catch (error) {
+        // Enhanced error handling with OAuth specific checks
+        if (error.name === 'NodeApiError' && error.message.includes('OAuth')) {
+          // Don't continue on OAuth errors even if continueOnFail is true
+          throw error;
+        }
+
+        // Handle other errors gracefully
         if (this.continueOnFail()) {
-          returnData.push({ json: { error: error.message } });
+          returnData.push({
+            json: {
+              success: false,
+              error: error.message,
+              details: error.response?.body
+            }
+          });
           continue;
         }
         throw error;
