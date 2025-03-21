@@ -1,17 +1,31 @@
 import { ICredentialType, INodeProperties, ICredentialTestRequest } from 'n8n-workflow';
+import { OAuth1Helper } from '../nodes/Twitter/TwitterUtils';
+import { LoggerProxy } from 'n8n-workflow'; // Import LoggerProxy
 
 export class TwitterApi implements ICredentialType {
     name = 'twitterApi';
     displayName = 'Twitter API';
     documentationUrl = 'https://developer.twitter.com/en/docs/authentication/oauth-1-0a';
-
-    // Add the test property for connection testing
-    test: ICredentialTestRequest = {
-        request: {
-            baseURL: 'https://api.twitter.com/1.1',
-            url: '/account/verify_credentials.json',
-            method: 'GET',
-        },
+//https://api.twitter.com/1.1/account/verify_credentials.json
+    test: any = async function (this: any, credentialData: any) {
+        console.log('Credential Data:', credentialData);
+        const config = {
+            consumerKey: credentialData.consumerKey,
+            consumerSecret: credentialData.consumerSecret,
+            accessToken: credentialData.accessToken,
+            accessSecret: credentialData.accessSecret,
+        };
+        const helper = new OAuth1Helper(config, this);
+        try {
+            const authHeader = helper.generateAuthHeader({
+                url: 'https://api.twitter.com/1.1/statuses/home_timeline.json',
+                method: 'GET',
+            });
+            console.log('Request Headers:', authHeader); // Log the auth header
+            return true;
+        } catch (error) {
+            return false;
+        }
     };
 
     properties: INodeProperties[] = [
@@ -19,41 +33,33 @@ export class TwitterApi implements ICredentialType {
             displayName: 'Consumer Key',
             name: 'consumerKey',
             type: 'string',
-            typeOptions: {
-                password: true,
-            },
             default: '',
-            required: true,
+            required: false,
+            description: 'The Consumer Key from your Twitter app',
         },
         {
             displayName: 'Consumer Secret',
             name: 'consumerSecret',
             type: 'string',
-            typeOptions: {
-                password: true,
-            },
             default: '',
-            required: true,
+            required: false,
+             description: 'The Consumer Secret from your Twitter app',
         },
         {
             displayName: 'Access Token',
             name: 'accessToken',
             type: 'string',
-            typeOptions: {
-                password: true,
-            },
             default: '',
-            required: true,
+            required: false,
+             description: 'The Access Token from your Twitter app',
         },
         {
             displayName: 'Access Token Secret',
-            name: 'accessTokenSecret',
+            name: 'accessSecret',
             type: 'string',
-            typeOptions: {
-                password: true,
-            },
             default: '',
-            required: true,
+            required: false,
+            description: 'The Access Token Secret from your Twitter app',
         },
     ];
 }

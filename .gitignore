@@ -8,3 +8,6 @@ yarn.lock
 .vscode/launch.json
 .history
 .vscode
+.env
+mytest*
+*.jpg

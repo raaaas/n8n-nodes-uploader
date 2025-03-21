@@ -1,15 +1,11 @@
-import type { INodeType, ICredentialType } from 'n8n-workflow';
-import { TwitterMediaUpload } from '../nodes/Twitter/TwitterMediaUpload.node';
+import { INodeType } from 'n8n-workflow';
+
+// Import your node classes
 import { TwitterBinaryCheck } from '../nodes/Twitter/TwitterBinaryCheck.node';
-import { TwitterApi } from '../credentials/TwitterApi.credentials';
+import { TwitterMediaUpload } from '../nodes/Twitter/TwitterMediaUpload.node';
 
-const nodeTypes: INodeType[] = [
-	new TwitterMediaUpload(),
-	new TwitterBinaryCheck(),
+// Export the nodes using the correct namespace format required by n8n
+export const nodeTypes: INodeType[] = [
+  new TwitterBinaryCheck(),
+  new TwitterMediaUpload(),
 ];
-
-const credentialTypes: ICredentialType[] = [
-	new TwitterApi(),
-];
-
-export { nodeTypes, credentialTypes };

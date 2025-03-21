@@ -1,0 +1,36 @@
+const crypto = require('node:crypto')
+
+const consumerKey = '<key>'
+const consumerSecret = '<secret>'
+
+const oAuthNonce = Math.random().toString(36).slice(2)
+const oAuthSignatureMethod = 'HMAC-SHA1'
+const oAuthTimestamp = Math.floor(Date.now() / 1000)
+const oAuthVersion = '1.0'
+const oAuthUrl = 'https://api.x.com/oauth/request_token'
+
+const oAuthParams = [
+  `oauth_consumer_key=${consumerKey}`,
+  `oauth_nonce=${oAuthNonce}`,
+  `oauth_signature_method=${oAuthSignatureMethod}`,
+  `oauth_timestamp=${oAuthTimestamp}`,
+  `oauth_version=${oAuthVersion}`
+].join('&')
+
+const oAuthSignatureBaseString = `POST&${encodeURIComponent(oAuthUrl)}&${encodeURIComponent(oAuthParams)}`
+const oAuthSignatureSigningKey = `${encodeURIComponent(consumerSecret)}&`
+
+const hmac = crypto.createHmac('sha1', oAuthSignatureSigningKey)
+hmac.update(oAuthSignatureBaseString)
+const oAuthSignature = hmac.digest('base64')
+
+return {
+  json: {
+    authorization: `OAuth oauth_consumer_key="${consumerKey}", oauth_nonce="${oAuthNonce}", oauth_signature="${encodeURIComponent(oAuthSignature)}", oauth_signature_method="${oAuthSignatureMethod}", oauth_timestamp=${oAuthTimestamp}, oauth_version="${oAuthVersion}"`
+  }
+}
+
+
+#https://community.n8n.io/t/how-to-authenticate-an-http-request-with-oauth-1-0-two-legged-in-n8n/80971/3
+
+{"nodes":[{"parameters":{},"type":"n8n-nodes-base.manualTrigger","typeVersion":1,"position":[0,0],"id":"d9d83fdd-8edb-43cf-a4bd-10892f19c006","name":"When clicking ‘Test workflow’"},{"parameters":{"jsCode":"const crypto = require('node:crypto')\n\nconst consumerKey = '<key>'\nconst consumerSecret = '<secret>'\n\nconst oAuthNonce = Math.random().toString(36).slice(2)\nconst oAuthSignatureMethod = 'HMAC-SHA1'\nconst oAuthTimestamp = Math.floor(Date.now() / 1000)\nconst oAuthVersion = '1.0'\nconst oAuthUrl = 'https://api.x.com/oauth/request_token'\n\nconst oAuthParams = [\n  `oauth_consumer_key=${consumerKey}`,\n  `oauth_nonce=${oAuthNonce}`,\n  `oauth_signature_method=${oAuthSignatureMethod}`,\n  `oauth_timestamp=${oAuthTimestamp}`,\n  `oauth_version=${oAuthVersion}`\n].join('&')\n\nconst oAuthSignatureBaseString = `POST&${encodeURIComponent(oAuthUrl)}&${encodeURIComponent(oAuthParams)}`\nconst oAuthSignatureSigningKey = `${encodeURIComponent(consumerSecret)}&`\n\nconst hmac = crypto.createHmac('sha1', oAuthSignatureSigningKey)\nhmac.update(oAuthSignatureBaseString)\nconst oAuthSignature = hmac.digest('base64')\n\nreturn {\n  json: {\n    authorization: `OAuth oauth_consumer_key=\"${consumerKey}\", oauth_nonce=\"${oAuthNonce}\", oauth_signature=\"${encodeURIComponent(oAuthSignature)}\", oauth_signature_method=\"${oAuthSignatureMethod}\", oauth_timestamp=${oAuthTimestamp}, oauth_version=\"${oAuthVersion}\"`\n  }\n}"},"type":"n8n-nodes-base.code","typeVersion":2,"position":[220,0],"id":"e887a806-c726-4827-aa2c-f9ffc0e2c5db","name":"Code"},{"parameters":{"method":"POST","url":"https://api.x.com/oauth/request_token","sendHeaders":true,"headerParameters":{"parameters":[{"name":"authorization","value":"={{ $json.authorization }}"}]},"options":{"response":{"response":{"responseFormat":"text"}}}},"type":"n8n-nodes-base.httpRequest","typeVersion":4.2,"position":[440,0],"id":"d483061b-dafb-4121-8a10-1893cfc233a9","name":"HTTP Request"}],"connections":{"When clicking ‘Test workflow’":{"main":[[{"node":"Code","type":"main","index":0}]]},"Code":{"main":[[{"node":"HTTP Request","type":"main","index":0}]]}},"pinData":{},"meta":{"instanceId":"68dbe40329cb6199d749f1accd2fbce4637c93c808eef4815440944af3501ce0"}}

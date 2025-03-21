@@ -1,2 +1,7 @@
 .DS_Store
 *.tsbuildinfo
+test/
+**/*.test.js
+**/*.test.ts
+test.jpg
+nodes/**/TwitterUtils.test.ts
