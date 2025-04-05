@@ -69,20 +69,18 @@ export class TwitterMediaUpload implements INodeType {
     // Validate required OAuth fields
     const requiredFields = [
       { field: 'consumerKey', label: 'Consumer Key' },
-      { field: 'consumerSecret', label: 'Access Token' },
+      { field: 'consumerSecret', label: 'Consumer Secret' },
       { field: 'accessToken', label: 'Access Token' },
-      { field: 'accessSecret', label: 'Access Token Secret' }
+      { field: 'accessSecret', label: 'Access Token Secret' },
     ];
 
-    for (const { field, label } of requiredFields) {
-      if (!credentials[field]?.toString()) {
-        throw new NodeOperationError(
-          this.getNode(),
-          `Missing required Twitter OAuth credential: ${label}`
-        );
-      }
+    // Check for missing credentials
+    if (!credentials.consumerKey || !credentials.consumerSecret || !credentials.accessToken || !credentials.accessSecret ) {
+      throw new NodeOperationError(
+        this.getNode(),
+        'Missing required Twitter OAuth credentials'
+      );
     }
-
     console.log('Twitter credentials validated successfully');
 
     const items = this.getInputData();
@@ -158,18 +156,21 @@ export class TwitterMediaUpload implements INodeType {
             `Invalid media type: ${mediaType}. Only images are supported.`
           );
         }
-
         // Create request options using form data approach
-        const requestUrl = 'https://upload.twitter.com/1.1/media/upload.json';
+        let requestUrl = 'https://upload.twitter.com/1.1/media/upload.json';
+        const userId = credentials.userId ? credentials.userId : '';
+        if (userId) {
+          requestUrl += '?additional_owners=' + userId;
+        }
 
-        // Create OAuth helper instance
-        const oauth = new OAuth1Helper({
-          consumerKey: credentials.consumerKey as string,
-          consumerSecret: credentials.consumerSecret as string,
-          accessToken: credentials.accessToken as string,
-          accessSecret: credentials.accessSecret as string
-        }, this.getNode());
 
+                // Create OAuth helper instance
+                const oauth = new OAuth1Helper({
+                  consumerKey: credentials.consumerKey as string,
+                  consumerSecret: credentials.consumerSecret as string,
+                  accessToken: credentials.accessToken as string,
+                  accessSecret: credentials.accessSecret as string
+                }, this.getNode());
         // Generate authorization header
         const authHeader = oauth.generateAuthHeader({
           url: requestUrl,

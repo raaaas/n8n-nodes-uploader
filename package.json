@@ -1,6 +1,6 @@
 {
   "name": "n8n-nodes-twitter-uploader",
-  "version": "0.1.77",
+  "version": "0.1.79",
   "description": "Twitter media upload nodes for n8n",
   "main": "dist/src/index.js",
   "scripts": {

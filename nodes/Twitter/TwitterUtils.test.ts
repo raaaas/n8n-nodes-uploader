@@ -77,7 +77,7 @@ describe('TwitterUtils', () => {
 				method: 'GET',
 			})).toThrowError('Missing required OAuth parameters: accessToken and accessSecret');
 		});
-	});
+		});
 
 	describe('TwitterMediaUpload', () => {
 		it('should upload a media file', async () => {
@@ -98,8 +98,8 @@ describe('TwitterUtils', () => {
 				consumerSecret: process.env.TWITTER_CONSUMER_SECRET,
 				accessToken: process.env.TWITTER_ACCESS_TOKEN,
 				accessSecret: process.env.TWITTER_ACCESS_SECRET,
+				  userId: process.env.TWITTER_USER_ID,
 			};
-
 			const imageUrl = 'https://fastly.picsum.photos/id/544/200/300.jpg?hmac=YL3M_fg_84Kqg0EQTvbltmjeGeQetARWPFA5YLn5hS0';
 			const response = await axios.get(imageUrl, { responseType: 'arraybuffer' });
 			const buffer = Buffer.from(response.data, 'binary');
@@ -122,7 +122,13 @@ describe('TwitterUtils', () => {
 			const context = {
 				getInputData: jest.fn().mockReturnValue(input),
 				getNodeParameter: jest.fn().mockReturnValue('data'),
-				getCredentials: jest.fn().mockReturnValue(credentials),
+				getCredentials: jest.fn().mockReturnValue({
+				      consumerKey: process.env.TWITTER_CONSUMER_KEY,
+				      consumerSecret: process.env.TWITTER_CONSUMER_SECRET,
+				      accessToken: process.env.TWITTER_ACCESS_TOKEN,
+				      accessSecret: process.env.TWITTER_ACCESS_SECRET,
+				      userId: process.env.TWITTER_USER_ID,
+				    }),
 				helpers: {
 					getBinaryDataBuffer: jest.fn().mockReturnValue(buffer),
 				},

@@ -10,6 +10,7 @@ export class TwitterApi implements ICredentialType {
     test: any = async function (this: any, credentialData: any) {
         console.log('Credential Data:', credentialData);
         const config = {
+					  userId: credentialData.userId,
             consumerKey: credentialData.consumerKey,
             consumerSecret: credentialData.consumerSecret,
             accessToken: credentialData.accessToken,
@@ -29,12 +30,21 @@ export class TwitterApi implements ICredentialType {
     };
 
     properties: INodeProperties[] = [
+					{
+						displayName: 'User ID',
+						name: 'userId',
+						type: 'string',
+						default: '',
+						required: false,
+						description: 'The User ID of the Twitter account',
+
+				},
         {
             displayName: 'Consumer Key',
             name: 'consumerKey',
             type: 'string',
             default: '',
-            required: false,
+            required: true,
             description: 'The Consumer Key from your Twitter app',
         },
         {
@@ -42,7 +52,7 @@ export class TwitterApi implements ICredentialType {
             name: 'consumerSecret',
             type: 'string',
             default: '',
-            required: false,
+            required: true,
              description: 'The Consumer Secret from your Twitter app',
         },
         {
@@ -50,7 +60,7 @@ export class TwitterApi implements ICredentialType {
             name: 'accessToken',
             type: 'string',
             default: '',
-            required: false,
+            required: true,
              description: 'The Access Token from your Twitter app',
         },
         {
@@ -58,7 +68,7 @@ export class TwitterApi implements ICredentialType {
             name: 'accessSecret',
             type: 'string',
             default: '',
-            required: false,
+            required: true,
             description: 'The Access Token Secret from your Twitter app',
         },
     ];
